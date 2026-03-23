@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #ffffff;
+  --color-secondary: #94a3b8;
+  --color-background-light: #f8fafc;
+  --color-background-dark: #020617;
+  --color-card-dark: #0f172a;
+  --color-border-dark: #1e293b;
+  --color-accent-cyan: #0095ff;
+  --color-accent-cyan-glow: rgba(0, 149, 255, 0.5);
+  --color-accent-silver: #e2e8f0;
+
+  --font-display: "Outfit", "system-ui", "sans-serif";
+  --radius-default: 24px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    @apply font-sans bg-background-dark text-white overflow-x-hidden antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer components {
+  .hero-glow {
+    filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.15));
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 500px;
+  }
+}
