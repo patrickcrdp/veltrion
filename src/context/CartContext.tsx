@@ -78,6 +78,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // 1. Mergear itens (Evitar Duplicação)
             if (firebaseItems && firebaseItems.length > 0) {
+                console.log("[CartSync] Firebase retornou", firebaseItems.length, "itens. Mesclando...");
                 setItems(currentLocal => {
                     // Mapeia por variantId para fácil atualização
                     const map = new Map<string, CartItem>();
@@ -99,7 +100,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     return Array.from(map.values());
                 });
             } else {
-                // Nuvem não tinha itens, então o nosso array local (mesmo vazio) é a fonte
+                console.log("[CartSync] Firebase vazio. Preservando itens locais.");
+                // Nuvem não tinha itens, então o nosso array local (mesmo vazio) é a fonte.
+                // Se existe algo local, força enviar para a nuvem para iniciar o espelho.
+                setItems(currentLocal => {
+                    if (currentLocal.length > 0) {
+                        setTimeout(() => firebaseService.saveCartItems(email, currentLocal), 800);
+                    }
+                    return currentLocal;
+                });
             }
 
             // 2. Aplicar Cloud ID
@@ -109,8 +118,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             // Marca como carregado para destravar salvamentos futuros
             hasLoadedFromFirebase.current = true;
+            console.log("[CartSync] Sincronia concluída com sucesso.");
         } catch (error) {
-            console.error("Cart Sync Error:", error);
+            console.error("[CartSyncError] Ocorreu uma falha vital:", error);
             setSyncError(true);
         } finally {
             setIsSyncing(false);
