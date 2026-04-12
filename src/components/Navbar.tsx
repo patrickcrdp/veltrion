@@ -85,9 +85,6 @@ const Navbar: React.FC = () => {
                     client_id: '89437350200-ijq84t1nuaofq2n4lvvnsdafa652eof2.apps.googleusercontent.com',
                     callback: handleGoogleResponse
                 });
-                
-                // Mostrar o pop-up One Tap
-                window.google.accounts.id.prompt();
             }
         };
 
@@ -110,7 +107,13 @@ const Navbar: React.FC = () => {
                 // Aguarda um respiro do DOM
                 setTimeout(() => {
                     try {
-                        // Limpa pra reconstruir se precisar (segurança React)
+                        // Garantir que a configuração está fresca para essa montagem
+                        window.google.accounts.id.initialize({
+                            client_id: '89437350200-ijq84t1nuaofq2n4lvvnsdafa652eof2.apps.googleusercontent.com',
+                            callback: handleGoogleResponse
+                        });
+                        
+                        // Limpa pra reconstruir se precisar
                         buttonDiv.innerHTML = '';
                         window.google.accounts.id.renderButton(buttonDiv, {
                             type: 'standard',
@@ -121,11 +124,12 @@ const Navbar: React.FC = () => {
                             width: '240'
                         });
                     } catch (e) {
-                        // Ocultar console warn do Render falho
+                         console.error("Erro ao renderizar Google Btn:", e);
                     }
-                }, 50);
+                }, 100);
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showUserMenu]);
 
     useEffect(() => {
