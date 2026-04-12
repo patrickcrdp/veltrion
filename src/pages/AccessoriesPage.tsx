@@ -32,7 +32,7 @@ function AccessoriesPage() {
                         {/* 3. Vitrine de Acessórios (Product Grid filtered) */}
                         <ProductGrid
                             collectionHandle="acessorios"
-                            title="Acessórios & Wearables"
+                            title="Acessórios"
                         />
                     </div>
 

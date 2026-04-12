@@ -44,7 +44,9 @@ function HomePage() {
 
                     
                     {/* Novo Carrossel de Smartphones */}
-                    <ProductGrid collectionHandle="smartphones" title="Smartphones de Performance" />
+                    <div id="smartphones-section" className="scroll-mt-32">
+                        <ProductGrid collectionHandle="smartphones" title="Smartphones de Performance" />
+                    </div>
 
                     {/* 7. Carousel Secundário (Acessórios) */}
                     <SecondaryCarousel 

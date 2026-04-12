@@ -125,33 +125,19 @@ function OrdersPage() {
                         if (realOrders && realOrders.length > 0) {
                             setOrders(realOrders);
                         } else {
-                            // Se falhar ou não tiver token, simulamos os dados reais para design
-                            setOrders(mockData);
+                            setOrders([]);
                         }
                     } catch (e) {
-                        setOrders(mockData);
+                        setOrders([]);
                     }
                 } else {
-                    setOrders(mockData);
+                    setOrders([]);
                 }
             }
             setIsLoading(false);
         };
         fetchOrders();
     }, [user]);
-
-    // Dados de exemplo que usam o design final da Shopify
-    const mockData = [
-        {
-            id: "VT-09827",
-            date: "20 DE MARÇO, 2024",
-            total: "6890.00",
-            status: "Processando",
-            items: [
-                { title: "iPhone 15 Pro Titanium", image: "https://images.unsplash.com/photo-1696446701796-da61225697cc?q=80&w=200" }
-            ]
-        }
-    ];
 
     if (!user) {
         return (
@@ -202,16 +188,6 @@ function OrdersPage() {
                                 <p className="text-slate-500 font-bold uppercase tracking-widest">Nenhum registro de aquisição detectado</p>
                             </div>
                         )}
-                    </div>
-
-                    {/* Support Call-to-action */}
-                    <div className="mt-12 p-10 rounded-[50px] bg-accent-cyan/5 border border-accent-cyan/10 text-center space-y-6">
-                        <span className="material-icons-round text-4xl text-accent-cyan opacity-40">support_agent</span>
-                        <h3 className="text-xl font-black text-white uppercase tracking-widest italic">Precisa de assistência logística?</h3>
-                        <p className="text-slate-400 font-medium max-w-lg mx-auto">Nossos agentes de IA e especialistas globais estão prontos para garantir que cada centímetro do envio seja perfeito.</p>
-                        <button className="px-12 py-4 rounded-full bg-accent-cyan text-black text-[10px] font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-accent-cyan/20">
-                            Falar com suporte
-                        </button>
                     </div>
                 </div>
             </main>

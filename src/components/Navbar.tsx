@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { useSearch } from '../context/SearchContext';
 import { useCart } from '../context/CartContext';
@@ -22,8 +23,27 @@ const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
     const { searchQuery, setSearchQuery } = useSearch();
-    const { cartCount, setIsCartOpen } = useCart();
+    const { cartCount, isCartOpen, setIsCartOpen } = useCart();
     const { user, login, logout } = useAuth();
+
+    const userMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setShowUserMenu(false);
+            }
+        };
+
+        if (showUserMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, [showUserMenu]);
 
     // Função para decodificar o token JWT do Google (sem bibliotecas externas)
     const parseJwt = (token: string) => {
@@ -56,38 +76,57 @@ const Navbar: React.FC = () => {
         setShowUserMenu(false);
     };
 
+    // Inicialização base do Google (Ocorre apenas 1x)
     useEffect(() => {
-        // Inicializar Google Sign-In
         const initGoogle = () => {
-            if (window.google) {
+            if (window.google && !window['gsi_initialized' as any]) {
+                (window as any)['gsi_initialized'] = true;
                 window.google.accounts.id.initialize({
                     client_id: '89437350200-ijq84t1nuaofq2n4lvvnsdafa652eof2.apps.googleusercontent.com',
                     callback: handleGoogleResponse
                 });
-
-                // Tentar mostrar One Tap
+                
+                // Mostrar o pop-up One Tap
                 window.google.accounts.id.prompt();
-
-                // Renderizar botão manual se o usuário abrir o menu
-                const buttonDiv = document.getElementById('google-login-btn');
-                if (buttonDiv) {
-                    window.google.accounts.id.renderButton(buttonDiv, {
-                        type: 'standard',
-                        shape: 'pill',
-                        theme: 'filled_black',
-                        size: 'large',
-                        text: 'signin_with',
-                        width: '240'
-                    });
-                }
             }
         };
 
-        const scriptExists = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-        if (scriptExists) {
-            initGoogle();
+        const checkScript = () => {
+            if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+                initGoogle();
+            } else {
+                setTimeout(checkScript, 500);
+            }
+        };
+        checkScript();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); 
+
+    // Renderiza o botão customizado apenas quando o menu abre e a div existe
+    useEffect(() => {
+        if (showUserMenu && window.google) {
+            const buttonDiv = document.getElementById('google-login-btn');
+            if (buttonDiv) {
+                // Aguarda um respiro do DOM
+                setTimeout(() => {
+                    try {
+                        // Limpa pra reconstruir se precisar (segurança React)
+                        buttonDiv.innerHTML = '';
+                        window.google.accounts.id.renderButton(buttonDiv, {
+                            type: 'standard',
+                            shape: 'pill',
+                            theme: 'filled_black',
+                            size: 'large',
+                            text: 'signin_with',
+                            width: '240'
+                        });
+                    } catch (e) {
+                        // Ocultar console warn do Render falho
+                    }
+                }, 50);
+            }
         }
-    }, [showUserMenu]); // Re-executa para renderizar o botão quando o menu abre
+    }, [showUserMenu]);
 
     useEffect(() => {
         const fetchSuggestions = async () => {
@@ -118,17 +157,9 @@ const Navbar: React.FC = () => {
             setScrolled(window.scrollY > 20);
         };
         window.addEventListener('scroll', handleScroll);
-        
-        // Lock body scroll when mobile menu or search is open
-        if (isMobileMenuOpen || isSearchFocused) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
-            document.body.style.overflow = '';
         };
     }, [isMobileMenuOpen, isSearchFocused]);
 
@@ -137,10 +168,36 @@ const Navbar: React.FC = () => {
         setIsMobileMenuOpen(false);
         setIsSearchFocused(false);
         setShowUserMenu(false);
-    }, [location.pathname]);
+        setIsCartOpen(false);
+    }, [location.pathname, setIsCartOpen]);
+
+    const handleNavClick = () => {
+        setIsMobileMenuOpen(false);
+        // Timeout garante que o ReactRouterDOM finalize qualquer renderização antes do scroll forçado
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 50);
+    };
+
+    const handleSmartphonesClick = (e: React.MouseEvent) => {
+        setIsMobileMenuOpen(false);
+        // Se a pessoa já estiver na página Home, evitamos recarregar e rolamos para a seção desejada nativamente.
+        if (location.pathname === '/') {
+            e.preventDefault();
+        }
+        setTimeout(() => {
+            const section = document.getElementById('smartphones-section');
+            if (section) {
+                // Rola centralizando a seção suavemente
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }, 50);
+    };
 
     return (
-        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-background-dark/90 backdrop-blur-xl border-b border-white/5 shadow-2xl py-1' : 'bg-transparent py-4'
+        <header className={`fixed top-0 left-0 right-0 z-[999] transition-all duration-500 ${scrolled ? 'bg-background-dark/90 backdrop-blur-xl border-b border-white/5 shadow-2xl py-1' : 'bg-transparent py-4'
             }`}>
             {/* Top Bar - Hidden on mobile and on scroll for ultra-clean look */}
             <div className={`top-bar hidden sm:block border-b border-white/5 py-2 transition-all duration-500 overflow-hidden ${scrolled ? 'max-h-0 opacity-0 mb-0' : 'max-h-20 opacity-100 mb-2'
@@ -156,28 +213,28 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Main Header */}
-            <div className="main-header">
+            <div className="main-header relative z-[90]">
                 <div className="container mx-auto px-6 flex items-center justify-between gap-8">
                     {/* Logo clicável */}
-                    <Link className="text-2xl font-black tracking-tighter text-white uppercase italic flex-shrink-0 group" to="/">
+                    <Link className="text-2xl font-black tracking-tighter text-white uppercase italic flex-shrink-0 group" to="/" onClick={handleNavClick}>
                         Veltrion<span className="text-accent-cyan inline-block group-hover:animate-bounce">.</span>
                     </Link>
 
                     {/* Menu de navegação principal */}
                     <nav className="hidden lg:flex items-center gap-8 text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
-                        <Link className="hover:text-white transition-all duration-300 relative group" to="/">
+                        <Link className="hover:text-white transition-all duration-300 relative group" to="/" onClick={handleSmartphonesClick}>
                             Smartphones
                             <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent-cyan transition-all duration-300 group-hover:w-full"></span>
                         </Link>
-                        <Link className="hover:text-white transition-all duration-300 relative group" to="/acessorios">
+                        <Link className="hover:text-white transition-all duration-300 relative group" to="/acessorios" onClick={handleNavClick}>
                             Acessórios
                             <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent-cyan transition-all duration-300 group-hover:w-full"></span>
                         </Link>
-                        <Link className="hover:text-white transition-all duration-300 relative group" to="/ofertas">
+                        <Link className="hover:text-white transition-all duration-300 relative group" to="/ofertas" onClick={handleNavClick}>
                             Ofertas
                             <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent-cyan transition-all duration-300 group-hover:w-full"></span>
                         </Link>
-                        <Link className="hover:text-white transition-all duration-300 relative group" to="/suporte">
+                        <Link className="hover:text-white transition-all duration-300 relative group" to="/suporte" onClick={handleNavClick}>
                             Suporte
                             <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent-cyan transition-all duration-300 group-hover:w-full"></span>
                         </Link>
@@ -270,8 +327,8 @@ const Navbar: React.FC = () => {
                     </button>
 
                     {/* Mobile Search Overlay */}
-                    {isSearchFocused && (
-                        <div className="md:hidden fixed inset-0 z-[100] bg-background-dark/95 backdrop-blur-2xl animate-in fade-in duration-200">
+                    {isSearchFocused && createPortal(
+                        <div className="md:hidden fixed inset-0 z-[1000] bg-background-dark/95 backdrop-blur-2xl animate-in fade-in duration-200">
                             <div className="flex flex-col h-full">
                                 {/* Mobile Search Header */}
                                 <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10">
@@ -349,12 +406,13 @@ const Navbar: React.FC = () => {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </div>,
+                        document.body
                     )}
 
                     {/* Account & Cart */}
                     <div className="flex items-center gap-6">
-                        <div className="relative">
+                        <div className="relative" ref={userMenuRef}>
                             {user ? (
                                 <button
                                     onClick={() => setShowUserMenu(!showUserMenu)}
@@ -470,7 +528,7 @@ const Navbar: React.FC = () => {
                         </div>
 
                         <button
-                            onClick={() => setIsCartOpen(true)}
+                            onClick={() => setIsCartOpen(!isCartOpen)}
                             className={`flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full transition-all duration-300 relative group ${cartCount > 0
                                     ? 'bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan shadow-[0_0_20px_rgba(0,149,255,0.2)]'
                                     : 'bg-white/5 border border-white/10 text-white/60 hover:border-white/20'
@@ -501,28 +559,28 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Mobile Navigation Menu Overlay */}
-            {isMobileMenuOpen && (
-                <div className="lg:hidden fixed inset-0 z-[80] bg-background-dark border-l border-white/5 animate-in fade-in slide-in-from-right duration-500">
+            {isMobileMenuOpen && createPortal(
+                <div className="lg:hidden fixed inset-0 z-[998] bg-background-dark border-l border-white/5 animate-in fade-in slide-in-from-right duration-500">
                     <div className="flex flex-col h-full pt-24 px-6 pb-12 overflow-y-auto">
                         <div className="flex flex-col gap-6">
                             <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">Navegação Principal</p>
                             
-                            <Link to="/" className="flex items-center justify-between group py-2" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Link to="/" className="flex items-center justify-between group py-2" onClick={handleSmartphonesClick}>
                                 <span className="text-3xl font-black text-white uppercase tracking-tighter group-active:text-accent-cyan transition-colors">Smartphones</span>
                                 <span className="material-icons-round text-accent-cyan text-2xl group-active:translate-x-2 transition-transform">arrow_forward</span>
                             </Link>
 
-                            <Link to="/acessorios" className="flex items-center justify-between group py-2" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Link to="/acessorios" className="flex items-center justify-between group py-2" onClick={handleNavClick}>
                                 <span className="text-3xl font-black text-white uppercase tracking-tighter group-active:text-accent-cyan transition-colors">Acessórios</span>
                                 <span className="material-icons-round text-accent-cyan text-2xl group-active:translate-x-2 transition-transform">arrow_forward</span>
                             </Link>
 
-                            <Link to="/ofertas" className="flex items-center justify-between group py-2" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Link to="/ofertas" className="flex items-center justify-between group py-2" onClick={handleNavClick}>
                                 <span className="text-3xl font-black text-white uppercase tracking-tighter group-active:text-accent-cyan transition-colors">Ofertas</span>
                                 <span className="material-icons-round text-accent-cyan text-2xl group-active:translate-x-2 transition-transform">arrow_forward</span>
                             </Link>
 
-                            <Link to="/suporte" className="flex items-center justify-between group py-2" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Link to="/suporte" className="flex items-center justify-between group py-2" onClick={handleNavClick}>
                                 <span className="text-3xl font-black text-white uppercase tracking-tighter group-active:text-accent-cyan transition-colors">Suporte</span>
                                 <span className="material-icons-round text-accent-cyan text-2xl group-active:translate-x-2 transition-transform">arrow_forward</span>
                             </Link>
@@ -556,7 +614,8 @@ const Navbar: React.FC = () => {
                              <p className="text-[8px] font-black text-white/10 uppercase tracking-[0.4em]">© 2026 Veltrion Digital Systems</p>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
             <style>{`
                 @keyframes bounce-slow {

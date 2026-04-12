@@ -89,10 +89,10 @@ const FeatureSection: React.FC = () => {
                             <div className="relative z-10 p-4 transform-gpu transition-all duration-[1.5s] [transition-timing-function:cubic-bezier(0.2,0,0,1)] hover:rotate-x-3 hover:rotate-y-[-5deg] animate-float-slow">
                                 
                                 {/* Elegant Rounded Container (No Shimmer) */}
-                                <div className="relative overflow-hidden rounded-[48px] md:rounded-[64px] bg-gradient-to-br from-white/5 to-transparent backdrop-blur-sm border border-white/10 p-12 lg:p-16 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] group-hover:border-accent-cyan/20 transition-all duration-[2s]">
+                                <div className="relative overflow-hidden rounded-[40px] md:rounded-[64px] bg-gradient-to-br from-white/5 to-transparent backdrop-blur-sm border border-white/10 p-4 sm:p-8 md:p-12 lg:p-16 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] group-hover:border-accent-cyan/20 transition-all duration-[2s]">
                                     <img
                                         src={product.images[0]}
-                                        className="w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.3)] group-hover:scale-110 transition-transform duration-[3s] [transition-timing-function:cubic-bezier(0.2,0,0,1)] select-none"
+                                        className="w-full h-auto scale-[1.15] md:scale-100 object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.3)] group-hover:scale-110 md:group-hover:scale-[1.15] transition-transform duration-[3s] [transition-timing-function:cubic-bezier(0.2,0,0,1)] select-none"
                                         alt={product.title}
                                     />
                                 </div>

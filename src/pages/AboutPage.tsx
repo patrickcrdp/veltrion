@@ -51,7 +51,7 @@ function AboutPage() {
                         </div>
                         <div className="space-y-2">
                             <div className="text-4xl font-black text-white">200+</div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-accent-cyan/60">Modelos Curados</div>
+                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-accent-cyan/60">Modelos Premium</div>
                         </div>
                         <div className="space-y-2">
                             <div className="text-4xl font-black text-white">24/7</div>

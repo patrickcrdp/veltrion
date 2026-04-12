@@ -25,6 +25,8 @@ interface CartContextType {
     checkout: () => Promise<void>;
     isCheckingOut: boolean;
     isSyncing: boolean;
+    syncError: boolean;
+    retrySync: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -35,51 +37,92 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isCheckingOut, setIsCheckingOut] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [syncError, setSyncError] = useState(false);
     const { user } = useAuth();
     const prevUserRef = useRef<string | null>(null);
 
     // ═══════════════════════════════════════════════════════
-    //  SINCRONISMO PRINCIPAL: Firebase é a fonte da verdade
+    //  SINCRONISMO PRINCIPAL: Robusto, com Timeout e Anti-Duplicação
     // ═══════════════════════════════════════════════════════
 
-    // Quando o usuário loga: carrega os itens do Firebase
+    const loadFromFirebase = React.useCallback(async (email: string) => {
+        setIsSyncing(true);
+        setSyncError(false);
+        try {
+            // Helper para forçar interrupção se o servidor do Firebase demorar/falhar
+            const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
+                return Promise.race([
+                    promise,
+                    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Timeout de Conexão com Firebase')), ms))
+                ]);
+            };
+
+            const cloudData = await withTimeout(
+                Promise.all([
+                    firebaseService.getCartItems(email),
+                    firebaseService.getCartId(email)
+                ]),
+                8000 // 8 segundos limite antes de abortar a sincronia para liberar o usuário
+            );
+
+            const firebaseItems = cloudData[0];
+            const cloudCartId = cloudData[1];
+
+            // 1. Mergear itens (Evitar Duplicação)
+            if (firebaseItems && firebaseItems.length > 0) {
+                setItems(currentLocal => {
+                    const merged = [...currentLocal];
+                    firebaseItems.forEach(fi => {
+                        const existingItem = merged.find(m => m.variantId === fi.variantId);
+                        if (!existingItem) {
+                            merged.push(fi); // Novo item da nuvem
+                        } else {
+                            // Se já existe local e na nuvem, adota a maior quantidade (Consistência)
+                            existingItem.quantity = Math.max(existingItem.quantity, fi.quantity);
+                        }
+                    });
+                    return merged;
+                });
+            }
+
+            // 2. Aplicar Cloud ID
+            if (cloudCartId) {
+                setCartId(cloudCartId);
+            }
+        } catch (error) {
+            console.error("Cart Sync Error:", error);
+            setSyncError(true);
+        } finally {
+            setIsSyncing(false);
+        }
+    }, []);
+
+    // Quando o usuário loga: inicia o sincronismo seguro
     useEffect(() => {
         const currentEmail = user?.email || null;
         const prevEmail = prevUserRef.current;
 
-        // Se deslogou → limpa tudo
+        // Limpeza Total no Logout
         if (!currentEmail && prevEmail) {
             setItems([]);
             setCartId(null);
+            setSyncError(false);
+            setIsSyncing(false);
         }
 
-        // Se logou (novo login) → puxa do Firebase
+        // Recuperação Segura no Login
         if (currentEmail && currentEmail !== prevEmail) {
-            const loadFromFirebase = async () => {
-                setIsSyncing(true);
-                try {
-                    // 1. Carrega os itens salvos no Firebase
-                    const firebaseItems = await firebaseService.getCartItems(currentEmail);
-                    if (firebaseItems && firebaseItems.length > 0) {
-                        setItems(firebaseItems);
-                    }
-
-                    // 2. Carrega o cartId da Shopify (para checkout e sync)
-                    const cloudCartId = await firebaseService.getCartId(currentEmail);
-                    if (cloudCartId) {
-                        setCartId(cloudCartId);
-                    }
-                } catch (error) {
-                    console.error("Erro ao carregar carrinho do Firebase:", error);
-                } finally {
-                    setIsSyncing(false);
-                }
-            };
-            loadFromFirebase();
+            loadFromFirebase(currentEmail);
         }
 
         prevUserRef.current = currentEmail;
-    }, [user]);
+    }, [user, loadFromFirebase]);
+
+    const retrySync = () => {
+        if (user?.email) {
+            loadFromFirebase(user.email);
+        }
+    };
 
     // ═══════════════════════════════════════════════════════
     //  PERSISTÊNCIA: Salva no Firebase sempre que os itens mudam
@@ -213,7 +256,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             cartTotal,
             checkout,
             isCheckingOut,
-            isSyncing
+            isSyncing,
+            syncError,
+            retrySync
         }}>
             {children}
         </CartContext.Provider>

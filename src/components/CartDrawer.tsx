@@ -14,7 +14,9 @@ export const CartDrawer: React.FC = () => {
         updateQuantity,
         checkout,
         isCheckingOut,
-        isSyncing
+        isSyncing,
+        syncError,
+        retrySync
     } = useCart();
     const { canPurchase, promptLogin } = useAuth();
 
@@ -29,7 +31,7 @@ export const CartDrawer: React.FC = () => {
             ></div>
 
             {/* Drawer */}
-            <div className="relative w-full max-w-md bg-background-dark/95 backdrop-blur-2xl border-l border-white/5 shadow-3xl h-full flex flex-col animate-in slide-in-from-right duration-500">
+            <div className="relative w-full max-w-md bg-background-dark/95 backdrop-blur-2xl border-l border-white/5 shadow-3xl h-full flex flex-col pt-24 lg:pt-28 animate-in slide-in-from-right duration-500">
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-8 border-b border-white/5">
@@ -40,9 +42,16 @@ export const CartDrawer: React.FC = () => {
                             <span className="text-accent-cyan/50 text-xs ml-2">({cartCount})</span>
                         </h2>
                         {isSyncing && (
-                            <div className="flex items-center gap-2 text-[9px] font-bold text-accent-cyan uppercase tracking-widest animate-pulse">
+                            <div className="flex items-center gap-2 text-[9px] font-bold text-accent-cyan uppercase tracking-widest animate-pulse mt-1">
                                 <span className="material-icons-round text-[10px]">cloud_sync</span>
                                 Sincronizando com Perfil...
+                            </div>
+                        )}
+                        {syncError && !isSyncing && (
+                            <div className="flex items-center gap-2 text-[9px] font-bold text-red-500 uppercase tracking-widest mt-1">
+                                <span className="material-icons-round text-[10px]">cloud_off</span>
+                                Falha ao sincronizar
+                                <button onClick={retrySync} className="text-white hover:text-accent-cyan transition-colors underline ml-1">Tentar Novamente</button>
                             </div>
                         )}
                     </div>
