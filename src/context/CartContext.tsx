@@ -32,7 +32,14 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [items, setItems] = useState<CartItem[]>([]);
+    const [items, setItems] = useState<CartItem[]>(() => {
+        try {
+            const stored = localStorage.getItem('veltrion_cart_items');
+            return stored ? JSON.parse(stored) : [];
+        } catch {
+            return [];
+        }
+    });
     const [cartId, setCartId] = useState<string | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -137,6 +144,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return () => clearTimeout(timer);
         }
     }, [items, user]);
+
+    // Salva silenciosamente os items no LocalStorage para visitantes anônimos
+    useEffect(() => {
+        try {
+            localStorage.setItem('veltrion_cart_items', JSON.stringify(items));
+        } catch (e) {
+            console.error("Local Storage Error", e);
+        }
+    }, [items]);
 
     // ═══════════════════════════════════════════════════════
     //  AÇÕES DO CARRINHO
