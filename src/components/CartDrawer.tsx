@@ -47,13 +47,6 @@ export const CartDrawer: React.FC = () => {
                                 Sincronizando com Perfil...
                             </div>
                         )}
-                        {syncError && !isSyncing && (
-                            <div className="flex items-center gap-2 text-[9px] font-bold text-red-500 uppercase tracking-widest mt-1">
-                                <span className="material-icons-round text-[10px]">cloud_off</span>
-                                Falha ao sincronizar
-                                <button onClick={retrySync} className="text-white hover:text-accent-cyan transition-colors underline ml-1">Tentar Novamente</button>
-                            </div>
-                        )}
                     </div>
                     <button
                         onClick={() => setIsCartOpen(false)}
@@ -68,7 +61,7 @@ export const CartDrawer: React.FC = () => {
                     {items.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-white/10 space-y-4">
                             <span className="material-icons-round text-8xl">shopping_cart</span>
-                            <p className="font-black uppercase tracking-[0.3em] text-xs">Sua sacola está vazia</p>
+                            <p className="font-black uppercase tracking-[0.3em] text-xs">Adicione itens à sua sacola</p>
                         </div>
                     ) : (
                         items.map((item) => (
@@ -124,8 +117,8 @@ export const CartDrawer: React.FC = () => {
                                 }
                                 checkout();
                             }}
-                            disabled={isCheckingOut || isSyncing}
-                            className={`w-full py-5 rounded-full font-black uppercase tracking-[0.3em] text-[10px] transition-all flex items-center justify-center gap-3 shadow-2xl relative overflow-hidden group ${(isCheckingOut || isSyncing)
+                            disabled={isCheckingOut}
+                            className={`w-full py-5 rounded-full font-black uppercase tracking-[0.3em] text-[10px] transition-all flex items-center justify-center gap-3 shadow-2xl relative overflow-hidden group ${(isCheckingOut)
                                     ? 'bg-white/10 text-white/30 cursor-not-allowed'
                                     : canPurchase
                                         ? 'bg-accent-cyan text-white hover:scale-[1.02] active:scale-95 shadow-accent-cyan/20 shadow-[0_10px_30px_rgba(0,149,255,0.3)]'
