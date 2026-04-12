@@ -460,75 +460,73 @@ const Navbar: React.FC = () => {
                             )}
 
                             {/* User Dropdown Menu */}
-                            {showUserMenu && (
-                                <div className="absolute top-full right-0 mt-4 w-64 bg-background-dark/95 backdrop-blur-2xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] z-[70] animate-in fade-in slide-in-from-top-2 duration-300">
-                                    {user ? (
-                                        <>
-                                            <div className="p-5 border-b border-white/5 bg-white/5 text-center sm:text-left">
-                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">Status: Conectado</p>
-                                                <p className="text-xs font-black text-white truncate">{user.name}</p>
-                                                <p className="text-[9px] font-medium text-white/30 truncate">{user.email}</p>
-                                            </div>
-                                            <div className="p-2">
-                                                <Link to="/perfil" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-[10px] font-black text-white uppercase tracking-widest transition-all group">
-                                                    <span className="material-icons-round text-lg text-secondary/40 group-hover:text-accent-cyan transition-colors">account_circle</span>
-                                                    Meu Perfil
-                                                </Link>
-                                                <Link to="/pedidos" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-[10px] font-black text-white uppercase tracking-widest transition-all group">
-                                                    <span className="material-icons-round text-lg text-secondary/40 group-hover:text-accent-cyan transition-colors">shopping_bag</span>
-                                                    Meus Pedidos
-                                                </Link>
-                                                <div className="h-[1px] bg-white/5 my-2 mx-4"></div>
-                                                <button
-                                                    onClick={handleLogout}
-                                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-[10px] font-black text-red-500 uppercase tracking-widest transition-all group"
-                                                >
-                                                    <span className="material-icons-round text-lg group-hover:rotate-12 transition-transform">logout</span>
-                                                    Encerrar Sessão
-                                                </button>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="p-6 flex flex-col items-center text-center gap-4">
-                                            <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-2">
-                                                <span className="material-icons-round text-2xl text-accent-cyan animate-pulse">login</span>
-                                            </div>
-                                            <div className="space-y-4">
-                                                <div className="space-y-1">
-                                                    <h4 className="text-[11px] font-black text-white uppercase tracking-widest">Acesso Premium</h4>
-                                                    <p className="text-[9px] font-medium text-white/40 uppercase tracking-tighter italic">Crie seu perfil Veltrion instantaneamente</p>
-                                                </div>
-
-                                                <div className="flex flex-col gap-3 p-4 rounded-xl bg-white/5 border border-white/5 text-left transition-all hover:bg-white/10 group/terms">
-                                                    <label className="flex gap-3 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            id="terms-check"
-                                                            className="w-4 h-4 mt-0.5 rounded border-white/10 bg-black/40 text-accent-cyan focus:ring-accent-cyan transition-all accent-accent-cyan shadow-[0_0_10px_rgba(0,149,255,0.2)]"
-                                                            checked={isTermsAccepted}
-                                                            onChange={(e) => setIsTermsAccepted(e.target.checked)}
-                                                        />
-                                                        <span className="text-[9px] font-bold text-slate-500 leading-snug uppercase tracking-widest group-hover:text-white transition-colors">
-                                                            Eu li e aceito os <Link to="/termos-de-servico" className="text-accent-cyan underline hover:text-white" onClick={() => setShowUserMenu(false)}>Termos de Serviço</Link> e a <Link to="/politica-de-privacidade" className="text-accent-cyan underline hover:text-white" onClick={() => setShowUserMenu(false)}>Política de Privacidade</Link> da Veltrion.
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <div className="relative w-full flex justify-center">
-                                                <div id="google-login-btn" className={`mt-4 min-h-[40px] w-full flex justify-center transition-all duration-500 ${!isTermsAccepted ? 'grayscale opacity-30 pointer-events-none blur-[1px]' : 'hover:scale-[1.02]'}`}></div>
-                                                {!isTermsAccepted && (
-                                                    <div
-                                                        className="absolute inset-0 z-10 cursor-not-allowed"
-                                                        onClick={(e) => { e.stopPropagation(); /* O visual de blur/grayscale já indica que é necessário marcar os termos */ }}
-                                                    ></div>
-                                                )}
-                                            </div>
-                                            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mt-2">Powered by Shopify Passport</p>
+                            <div className={`absolute top-full right-0 mt-4 w-64 bg-background-dark/95 backdrop-blur-2xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] z-[70] transition-all duration-300 ${showUserMenu ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2 pointer-events-none'}`}>
+                                {user ? (
+                                    <>
+                                        <div className="p-5 border-b border-white/5 bg-white/5 text-center sm:text-left">
+                                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">Status: Conectado</p>
+                                            <p className="text-xs font-black text-white truncate">{user.name}</p>
+                                            <p className="text-[9px] font-medium text-white/30 truncate">{user.email}</p>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+                                        <div className="p-2">
+                                            <Link to="/perfil" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-[10px] font-black text-white uppercase tracking-widest transition-all group" onClick={() => setShowUserMenu(false)}>
+                                                <span className="material-icons-round text-lg text-secondary/40 group-hover:text-accent-cyan transition-colors">account_circle</span>
+                                                Meu Perfil
+                                            </Link>
+                                            <Link to="/pedidos" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-[10px] font-black text-white uppercase tracking-widest transition-all group" onClick={() => setShowUserMenu(false)}>
+                                                <span className="material-icons-round text-lg text-secondary/40 group-hover:text-accent-cyan transition-colors">shopping_bag</span>
+                                                Meus Pedidos
+                                            </Link>
+                                            <div className="h-[1px] bg-white/5 my-2 mx-4"></div>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-[10px] font-black text-red-500 uppercase tracking-widest transition-all group"
+                                            >
+                                                <span className="material-icons-round text-lg group-hover:rotate-12 transition-transform">logout</span>
+                                                Encerrar Sessão
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="p-6 flex flex-col items-center text-center gap-4">
+                                        <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-2">
+                                            <span className="material-icons-round text-2xl text-accent-cyan animate-pulse">login</span>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="space-y-1">
+                                                <h4 className="text-[11px] font-black text-white uppercase tracking-widest">Acesso Premium</h4>
+                                                <p className="text-[9px] font-medium text-white/40 uppercase tracking-tighter italic">Crie seu perfil Veltrion instantaneamente</p>
+                                            </div>
+
+                                            <div className="flex flex-col gap-3 p-4 rounded-xl bg-white/5 border border-white/5 text-left transition-all hover:bg-white/10 group/terms">
+                                                <label className="flex gap-3 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="terms-check"
+                                                        className="w-4 h-4 mt-0.5 rounded border-white/10 bg-black/40 text-accent-cyan focus:ring-accent-cyan transition-all accent-accent-cyan shadow-[0_0_10px_rgba(0,149,255,0.2)]"
+                                                        checked={isTermsAccepted}
+                                                        onChange={(e) => setIsTermsAccepted(e.target.checked)}
+                                                    />
+                                                    <span className="text-[9px] font-bold text-slate-500 leading-snug uppercase tracking-widest group-hover:text-white transition-colors">
+                                                        Eu li e aceito os <Link to="/termos-de-servico" className="text-accent-cyan underline hover:text-white" onClick={() => setShowUserMenu(false)}>Termos de Serviço</Link> e a <Link to="/politica-de-privacidade" className="text-accent-cyan underline hover:text-white" onClick={() => setShowUserMenu(false)}>Política de Privacidade</Link> da Veltrion.
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div className="relative w-full flex justify-center">
+                                            <div id="google-login-btn" className={`mt-4 min-h-[40px] w-full flex justify-center transition-all duration-500 ${!isTermsAccepted ? 'grayscale opacity-30 pointer-events-none blur-[1px]' : 'hover:scale-[1.02]'}`}></div>
+                                            {!isTermsAccepted && (
+                                                <div
+                                                    className="absolute inset-0 z-10 cursor-not-allowed"
+                                                    onClick={(e) => { e.stopPropagation(); }}
+                                                ></div>
+                                            )}
+                                        </div>
+                                        <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mt-2">Powered by Shopify Passport</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <button
