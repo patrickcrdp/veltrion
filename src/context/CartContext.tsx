@@ -47,6 +47,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [syncError, setSyncError] = useState(false);
     const { user } = useAuth();
     const prevUserRef = useRef<string | null>(null);
+    const hasLoadedFromFirebase = useRef<boolean>(false);
 
     // ═══════════════════════════════════════════════════════
     //  SINCRONISMO PRINCIPAL: Robusto, com Timeout e Anti-Duplicação
@@ -78,24 +79,36 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // 1. Mergear itens (Evitar Duplicação)
             if (firebaseItems && firebaseItems.length > 0) {
                 setItems(currentLocal => {
-                    const merged = [...currentLocal];
+                    // Mapeia por variantId para fácil atualização
+                    const map = new Map<string, CartItem>();
+                    
+                    // Prioriza o que já tem local
+                    currentLocal.forEach(item => map.set(item.variantId, { ...item }));
+                    
+                    // Traz da Nuvem
                     firebaseItems.forEach(fi => {
-                        const existingItem = merged.find(m => m.variantId === fi.variantId);
-                        if (!existingItem) {
-                            merged.push(fi); // Novo item da nuvem
+                        if (map.has(fi.variantId)) {
+                            // Se existe nos dois, pega a maior quantidade pra n perder
+                            const exist = map.get(fi.variantId)!;
+                            map.set(fi.variantId, { ...exist, quantity: Math.max(exist.quantity, fi.quantity) });
                         } else {
-                            // Se já existe local e na nuvem, adota a maior quantidade (Consistência)
-                            existingItem.quantity = Math.max(existingItem.quantity, fi.quantity);
+                            map.set(fi.variantId, fi);
                         }
                     });
-                    return merged;
+                    
+                    return Array.from(map.values());
                 });
+            } else {
+                // Nuvem não tinha itens, então o nosso array local (mesmo vazio) é a fonte
             }
 
             // 2. Aplicar Cloud ID
             if (cloudCartId) {
                 setCartId(cloudCartId);
             }
+            
+            // Marca como carregado para destravar salvamentos futuros
+            hasLoadedFromFirebase.current = true;
         } catch (error) {
             console.error("Cart Sync Error:", error);
             setSyncError(true);
@@ -115,10 +128,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setCartId(null);
             setSyncError(false);
             setIsSyncing(false);
+            hasLoadedFromFirebase.current = false;
         }
 
         // Recuperação Segura no Login
         if (currentEmail && currentEmail !== prevEmail) {
+            hasLoadedFromFirebase.current = false; // Reset no novo login
             loadFromFirebase(currentEmail);
         }
 
@@ -136,8 +151,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // ═══════════════════════════════════════════════════════
 
     useEffect(() => {
-        if (user?.email && items.length >= 0) {
-            // Debounce para não sobrecarregar o Firebase
+        if (user?.email && hasLoadedFromFirebase.current) {
+            // Debounce para não sobrecarregar o Firebase e apenas se já passou do primeiro Load
             const timer = setTimeout(() => {
                 firebaseService.saveCartItems(user.email, items);
             }, 500);
