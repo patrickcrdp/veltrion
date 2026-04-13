@@ -14,9 +14,7 @@ export const CartDrawer: React.FC = () => {
         updateQuantity,
         checkout,
         isCheckingOut,
-        isSyncing,
-        syncError,
-        retrySync
+        isSyncing
     } = useCart();
     const { canPurchase, promptLogin } = useAuth();
 
